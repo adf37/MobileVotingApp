@@ -1,0 +1,16 @@
+<msg>
+	<head>
+		<MsgID>701</MsgID>
+		<description>Cast vote</description>
+	</head>
+	<body>
+		<attr>
+			<key>
+				<VoterPhoneNo>5559089</VoterPhoneNo>
+			</key>
+			<value>
+				<CandidateID>4</CandidateID>
+			</value>
+		</attr>
+	</body>
+</msg>
