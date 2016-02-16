@@ -1,0 +1,13 @@
+<!-- 1 = dup; 2 = invalid; 3 = valid -->
+<Msg>
+<Head>
+<MsgID>711</MsgID>
+<Description>Acknowledge Vote</Description>
+</Head>
+<Body>
+<Item>
+<Key>Status</Key>
+<Value>2</Value>
+</Item>
+</Body>
+</Msg>
