@@ -26,8 +26,8 @@ private final int invalid=2;
 private final int valid=3;
 private final int notInitialized=4;
 private boolean initialized = false;
-private Map<String, Integer> tallyTable = new HashMap<String, Integer>(); 
-private ArrayList<String> voterTable = new ArrayList<String>();
+private HashMap<String, Integer> tallyTable = new HashMap<String, Integer>(); 
+private ArrayList<String> voterTable; //not initialized yet 
 private String [] candidateList;
 
 private int state;
@@ -69,6 +69,7 @@ private void voterAuthentication(String phone, String cID){
 private void initializeCandidates(String password, String [] list){
 	if (password.equals("pass")){
 		candidateList = new String[list.length];
+		voterTable = new ArrayList<String>();
 		initialized = true;
 		for (int i=0; i<list.length; i++){
 			candidateList[i] = list[i];
@@ -86,24 +87,12 @@ private String rankedReport(String password, String N){
 	}
 	else if (password.equals("pass")){
 		if (n >= tallyTable.size()){
-			String s = "";
-			Iterator it = tallyTable.entrySet().iterator();
-			while(it.hasNext()){
-				Map.Entry pair = (Map.Entry)it.next();
-				s += (pair.getKey() + ": " + pair.getValue() + " ");
-			}
+			String s = sortByValues(tallyTable, tallyTable.size());
 			state = valid;
 			return s;
 		}
 		else{
-			Iterator it = tallyTable.entrySet().iterator();
-			int count = 0;
-			String s = "";
-			while(count < n){
-				Map.Entry pair = (Map.Entry)it.next();
-				s += (pair.getKey() + ":" + pair.getValue() + " ");
-				count++;
-			}
+			String s = sortByValues(tallyTable, n);
 			state = valid;
 			return s;
 		}
@@ -190,4 +179,21 @@ public KeyValueList processMsg(KeyValueList kvList){
   return kvResult;
 }
 
+private static String sortByValues(HashMap map, int n){
+	String s = "";
+	Object [] a = map.entrySet().toArray();
+	Arrays.sort(a, new Comparator() {
+        public int compare(Object o1, Object o2) {
+            return ((Map.Entry<String, Integer>) o2).getValue().compareTo(
+                    ((Map.Entry<String, Integer>) o1).getValue());
+        }
+    });
+	for (int i=0; i<n; i++){
+		Object e = a[i];
+			s += (((Map.Entry<String, Integer>) e).getKey() + "-->"
+                + ((Map.Entry<String, Integer>) e).getValue() + "  ");
+	}
+    
+	return s;
+}
 }
