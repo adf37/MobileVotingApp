@@ -159,15 +159,11 @@ Set up a socket server waiting for the remote to connect.
 public class InterfaceServer
 {
 
-   public static final int port=7999; //port is the one specified in the prjRemote
+   public static final int port = 7999; //port is the one specified in the prjRemote
 
    public static void main(String[] args) throws Exception 
   {
      ServerSocket server = new ServerSocket(port);
-
-    /*
-    You need to create your component here
-    */
 
     ComponentBase compMy = new componentMy();
     Socket client = server.accept();

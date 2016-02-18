@@ -24,26 +24,17 @@ public class componentMy implements ComponentBase{
 private final int dup=1;
 private final int invalid=2;
 private final int valid=3;
+private final int notInitialized=4;
+private boolean initialized = false;
 private Map<String, Integer> tallyTable = new HashMap<String, Integer>(); 
 private ArrayList<String> voterTable = new ArrayList<String>();
-private String [] candidateList; //only temporary until admin submits list
+private String [] candidateList;
 
 private int state;
 
 public componentMy(){
     state=invalid;
 }
-
-/* just a trivial example 
-
-private void doAuthentication(String first,String last,String passwd){ //should be changed for voting system specifics
-
-if (first.equals("xin")&&last.equals("li")&&passwd.equals("pass"))
-    state=success;
-else 
-    state=failure;
-}
-*/
 
 //After checking that the voter has not voted before, the candidateID will be verified
 //If cID is valid then the vote will be logged in the tallyTable, else failure
@@ -58,7 +49,9 @@ private boolean castVoteAuthentication(String cID){
 //First want to check that the phone number of the voter has not already voted. Only vote per voter
 //If it is their first vote then proceed with authentication of cID, and if valid update voter table.
 private void voterAuthentication(String phone, String cID){
-	if (!voterTable.contains(phone)){
+	if (!initialized)
+		state = notInitialized;
+	else if (!voterTable.contains(phone)){
 		if(castVoteAuthentication(cID)){ //if not duplicate vote and cID is valid
 			voterTable.add(phone);
 			int count = tallyTable.get(cID);
@@ -76,6 +69,7 @@ private void voterAuthentication(String phone, String cID){
 private void initializeCandidates(String password, String [] list){
 	if (password.equals("pass")){
 		candidateList = new String[list.length];
+		initialized = true;
 		for (int i=0; i<list.length; i++){
 			candidateList[i] = list[i];
 			tallyTable.put(list[i], 0);
@@ -84,7 +78,42 @@ private void initializeCandidates(String password, String [] list){
 	}
 }
 
-/* function in interface ComponentBase */
+private String rankedReport(String password, String N){
+	int n = Integer.parseInt(N);
+	if (!initialized){
+		state = notInitialized;
+		return null;
+	}
+	else if (password.equals("pass")){
+		if (n >= tallyTable.size()){
+			String s = "";
+			Iterator it = tallyTable.entrySet().iterator();
+			while(it.hasNext()){
+				Map.Entry pair = (Map.Entry)it.next();
+				s += (pair.getKey() + ": " + pair.getValue() + " ");
+			}
+			state = valid;
+			return s;
+		}
+		else{
+			Iterator it = tallyTable.entrySet().iterator();
+			int count = 0;
+			String s = "";
+			while(count < n){
+				Map.Entry pair = (Map.Entry)it.next();
+				s += (pair.getKey() + ":" + pair.getValue() + " ");
+				count++;
+			}
+			state = valid;
+			return s;
+		}
+	}
+	else{
+		state = invalid;
+		return null;
+	}
+}
+
 
 //Processes the incoming messages with a key value pairing
 public KeyValueList processMsg(KeyValueList kvList){
@@ -108,8 +137,34 @@ public KeyValueList processMsg(KeyValueList kvList){
 				kvResult.addPair("Authentication", "Duplicate vote");
 				break;
 			}
+			case notInitialized: {
+				kvResult.addPair("Authentication", "Tables not initialized");
+				break;
+			}
 		}
 		
+	}
+	else if (MsgID == 702){ //Admin rankedReport
+		String s = rankedReport(kvList.getValue("Passcode"), kvList.getValue("N"));
+		kvResult.addPair("MsgID", "712");
+		kvResult.addPair("Description", "Acknowledgement");
+		switch(state){
+			case valid: {
+				kvResult.addPair("Access", "Granted");
+				kvResult.addPair("RankedReport", s);
+				break;
+			}
+			case invalid: {
+				kvResult.addPair("Access", "Denied");
+				kvResult.addPair("RankedReport", s);
+				break;
+			}
+			case notInitialized: {
+				kvResult.addPair("Access", "Tables not initialized");
+				kvResult.addPair("RankedReport", s);
+				break;
+			}
+		}
 	}
 	else if (MsgID == 703){ //processes initialization of tally table
 		candidateList = kvList.getValue("CandidateList").split(";");
