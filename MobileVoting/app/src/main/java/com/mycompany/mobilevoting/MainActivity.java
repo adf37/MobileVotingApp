@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import java.util.*;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -22,12 +23,17 @@ public class MainActivity extends ActionBarActivity {
     Button btnSendSMS;
     EditText txtPhoneNo;
     EditText txtMessage;
+    HashMap<String, Integer> tallyTable = new HashMap<String, Integer>();
+    ArrayList<String> voterTable = new ArrayList<String>();
+    String [] candList = {"15", "3", "4", "10"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        for (int i=0; i<candList.length; i++){
+            tallyTable.put(candList[i], 0);
+        }
         btnSendSMS = (Button)findViewById(R.id.btnSendSMS);
         txtPhoneNo = (EditText)findViewById(R.id.txtPhoneNo);
         txtMessage = (EditText)findViewById(R.id.txtMessage);
@@ -58,10 +64,28 @@ public class MainActivity extends ActionBarActivity {
         registerReceiver(new BroadcastReceiver(){
             @Override
             public void onReceive(Context arg0, Intent arg1) {
+                boolean voted = false;
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getBaseContext(), "SMS sent",
                                 Toast.LENGTH_SHORT).show();
+                        if (!voterTable.contains(txtPhoneNo.getText().toString())){
+                            for (String s : candList){
+                                if (s.equals(txtMessage.getText().toString())){
+                                    voterTable.add(txtPhoneNo.getText().toString());
+                                    int count = tallyTable.get(txtMessage.getText().toString());
+                                    tallyTable.put(txtMessage.getText().toString(), count++);
+                                    Toast.makeText(getBaseContext(), "Vote was valid", Toast.LENGTH_SHORT).show();
+                                    voted = true;
+                                }
+                            }
+                            if (!voted)
+                                Toast.makeText(getBaseContext(), "Vote was not valid", Toast.LENGTH_SHORT).show();
+                            break;
+                        }
+                        else{
+                            Toast.makeText(getBaseContext(), "Vote was duplicate", Toast.LENGTH_SHORT).show();
+                        }
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
                         Toast.makeText(getBaseContext(), "Generic failure",
